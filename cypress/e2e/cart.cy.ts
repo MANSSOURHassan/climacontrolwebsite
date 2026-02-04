@@ -59,7 +59,7 @@ describe('Processus de commande', () => {
         cy.wait(500)
 
         // Chercher le bouton commander et cliquer
-        cy.contains(/Commander|Passer|Valider|Checkout/i).click({ force: true })
+        cy.contains(/Finaliser ma commande|Commander|Passer|Valider|Checkout/i).click({ force: true })
 
         cy.url().should('include', '/commande')
     })
