@@ -13,7 +13,7 @@ export default function AddToCartButton({ product }: { product: any }) {
         addItem({
             id: product.id.toString(),
             nom: product.nom,
-            prix: product.prix_ttc,
+            prix: product.prix_ttc ?? 0,
             image: product.image_principale,
             categorie: product.categorie?.slug || "general",
         })
