@@ -1,0 +1,18 @@
+{
+    "testProduct": {
+        "name": "Climatiseur Mural",
+        "price": 899
+    },
+    "testUser": {
+        "email": "test@example.com",
+        "password": "Test123!",
+        "name": "Test User"
+    },
+    "contactForm": {
+        "nom": "Dupont",
+        "prenom": "Jean",
+        "email": "jean.dupont@email.com",
+        "telephone": "0612345678",
+        "message": "Je souhaite un renseignement sur vos climatiseurs."
+    }
+}
