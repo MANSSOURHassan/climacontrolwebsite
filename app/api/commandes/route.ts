@@ -9,7 +9,7 @@ const commandeSchema = z.object({
       produit_id: z.string(),
       nom_produit: z.string(),
       quantite: z.number().min(1),
-      prix_unitaire: z.number().positive(),
+      prix_unitaire: z.number().nonnegative(),
     }),
   ),
   mode_paiement: z.enum(["carte", "virement", "paypal", "cheque"]),
