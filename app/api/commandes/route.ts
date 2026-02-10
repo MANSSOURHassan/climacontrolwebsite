@@ -61,12 +61,15 @@ export async function POST(request: NextRequest) {
         montant_tva,
         montant_ttc,
         adresse_livraison: adresse,
-        mode_paiement: data.mode_paiement
+        notes: `Paiement: ${data.mode_paiement}`
       }])
       .select()
       .single()
 
-    if (orderError) throw orderError
+    if (orderError) {
+      console.error("[API] Error inserting order:", orderError)
+      throw orderError
+    }
 
     const commande_id = newOrder.id
 
@@ -83,7 +86,10 @@ export async function POST(request: NextRequest) {
       .from('commande_lignes')
       .insert(lignes)
 
-    if (linesError) throw linesError
+    if (linesError) {
+      console.error("[API] Error inserting lines:", linesError)
+      throw linesError
+    }
 
 
     // Récupérer les détails des produits depuis Supabase pour l'email

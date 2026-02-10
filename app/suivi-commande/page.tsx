@@ -132,7 +132,7 @@ export default function OrderTrackingPage() {
                                     <div className="text-2xl font-bold text-primary">{Number(order.montant_ttc).toFixed(2)} €</div>
                                     <div className="text-sm text-gray-500 flex items-center justify-end gap-1">
                                         <CreditCard className="h-3 w-3" />
-                                        Paiement: {order.mode_paiement || "Non spécifié"}
+                                        Paiement: {order.mode_paiement || order.notes?.replace('Paiement: ', '') || "Non spécifié"}
                                     </div>
                                 </div>
                             </CardContent>
