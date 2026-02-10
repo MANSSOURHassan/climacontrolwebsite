@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,9 +12,12 @@ import { Badge } from "@/components/ui/badge"
 
 interface Order {
   id: number
-  date_commande: string
+  numero_commande?: string
+  date_commande?: string
+  created_at?: string
   statut: string
-  montant_total: number
+  montant_total?: number
+  montant_ttc?: number
 }
 
 export default function DashboardClient() {
@@ -141,16 +145,28 @@ export default function DashboardClient() {
                 ) : (
                   <div className="space-y-4">
                     {orders.map(order => (
-                      <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                        <div>
-                          <div className="font-semibold">Commande #{order.id}</div>
-                          <div className="text-sm text-gray-500">{new Date(order.date_commande).toLocaleDateString()}</div>
+                      <div key={order.id} className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:border-primary/50 transition-all bg-white shadow-sm hover:shadow-md">
+                        <div className="mb-4 sm:mb-0">
+                          <div className="flex items-center gap-2">
+                            <div className="font-bold text-lg text-primary">{order.numero_commande || `CMD-${order.id}`}</div>
+                            <Badge variant={order.statut === 'livre' ? 'default' : 'secondary'} className="capitalize">
+                              {order.statut.replace('_', ' ')}
+                            </Badge>
+                          </div>
+                          <div className="text-sm text-gray-500 mt-1 flex items-center gap-2">
+                            <span className="inline-block w-2 h-2 rounded-full bg-gray-300"></span>
+                            {new Date(order.created_at || order.date_commande || Date.now()).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-bold">{order.montant_total} €</div>
-                          <Badge variant={order.statut === 'livré' ? 'secondary' : 'default'} className="capitalize">
-                            {order.statut}
-                          </Badge>
+
+                        <div className="text-right flex flex-col sm:flex-row items-center gap-4">
+                          <div className="font-bold text-lg">{Number(order.montant_ttc || 0).toFixed(2)} €</div>
+                          <Button asChild size="sm" variant="outline" className="w-full sm:w-auto gap-2 group-hover:bg-primary group-hover:text-white transition-colors">
+                            <Link href={`/suivi-commande?numero=${order.numero_commande}&email=${client.email}`}>
+                              <Truck className="h-4 w-4" />
+                              Suivre
+                            </Link>
+                          </Button>
                         </div>
                       </div>
                     ))}

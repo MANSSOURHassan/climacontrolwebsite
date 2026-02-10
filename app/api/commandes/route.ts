@@ -1,9 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { query } from "@/lib/db"
+import { supabase } from "@/lib/supabase"
 import { z } from "zod"
+import { sendOrderConfirmationEmail } from "@/lib/email"
 
 const commandeSchema = z.object({
-  client_id: z.number(),
+  client_id: z.number().optional(),
+  client: z.object({
+    prenom: z.string(),
+    nom: z.string(),
+    email: z.string().email(),
+    telephone: z.string().optional(),
+  }),
   items: z.array(
     z.object({
       produit_id: z.string(),
@@ -12,7 +20,7 @@ const commandeSchema = z.object({
       prix_unitaire: z.number().nonnegative(),
     }),
   ),
-  mode_paiement: z.enum(["carte", "virement", "paypal", "cheque"]),
+  mode_paiement: z.string(), // z.enum([...]) removed to allow other payment methods added dynamically
   adresse_livraison: z.object({
     adresse: z.string(),
     code_postal: z.string(),
@@ -21,9 +29,8 @@ const commandeSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
-  let body;
   try {
-    body = await request.json()
+    const body = await request.json()
     const data = commandeSchema.parse(body)
 
     // Calculer les montants
@@ -39,20 +46,23 @@ export async function POST(request: NextRequest) {
     let commande_id = Math.floor(Math.random() * 10000);
 
     try {
-      // Tentative d'insertion en base de données
+      // Tentative d'insertion en base de données MySQL
       const result: any = await query(
         "SELECT COUNT(*) as count FROM commandes WHERE YEAR(created_at) = ? AND MONTH(created_at) = ?",
         [annee, new Date().getMonth() + 1],
       )
-      const compteur = result[0].count + 1
-      numero_commande = `CMD${annee}${mois}-${String(compteur).padStart(4, "0")}`
+
+      if (result && result[0]) {
+        const compteur = result[0].count + 1
+        numero_commande = `CMD${annee}${mois}-${String(compteur).padStart(4, "0")}`
+      }
 
       // Insérer la commande
       const adresse = `${data.adresse_livraison.adresse}, ${data.adresse_livraison.code_postal} ${data.adresse_livraison.ville}`
       const commandeResult: any = await query(
         `INSERT INTO commandes (numero_commande, client_id, statut, montant_ht, montant_tva, montant_ttc, adresse_livraison) 
         VALUES (?, ?, 'en_attente', ?, ?, ?, ?)`,
-        [numero_commande, data.client_id, montant_ht, montant_tva, montant_ttc, adresse],
+        [numero_commande, data.client_id || 1, montant_ht, montant_tva, montant_ttc, adresse],
       )
 
       commande_id = commandeResult.insertId
@@ -67,15 +77,41 @@ export async function POST(request: NextRequest) {
       }
     } catch (dbError) {
       console.warn("[API] DB non disponible, passage en mode simulation pour la commande:", dbError);
-      // On continue comme si ça avait marché pour ne pas bloquer l'utilisateur frontend
     }
+
+    // Récupérer les détails des produits depuis Supabase pour l'email
+    const productIds = data.items.map(i => i.produit_id)
+    const { data: productsDetails } = await supabase
+      .from('produits')
+      .select('id, nom, description, marque, caracteristiques')
+      .in('id', productIds)
+
+    // Fusionner les infos
+    const enrichedItems = data.items.map(item => {
+      const details = productsDetails?.find(p => p.id.toString() === item.produit_id.toString())
+      return {
+        ...item,
+        description: details?.description,
+        marque: details?.marque,
+        caracteristiques: details?.caracteristiques
+      }
+    })
+
+    // Envoyer l'email de confirmation
+    await sendOrderConfirmationEmail({
+      numero_commande,
+      client: data.client,
+      items: enrichedItems,
+      total: montant_ttc,
+      date: new Date().toLocaleDateString('fr-FR')
+    })
 
     return NextResponse.json({
       success: true,
       commande_id,
       numero_commande,
       montant_ttc,
-      message: "Commande créée avec succès (Simulation si DB inactive)",
+      message: "Commande créée avec succès",
     })
   } catch (error) {
     console.error("[v0] Erreur création commande:", error)

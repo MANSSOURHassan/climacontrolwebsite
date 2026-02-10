@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Menu, Phone, Mail, X, ChevronRight, Home, Info, ShoppingBag, Calculator, Calendar, Wrench, Briefcase, MessageCircle, User } from "lucide-react"
+import { Menu, Phone, Mail, X, ChevronRight, Home, Info, ShoppingBag, Calculator, Calendar, Wrench, Briefcase, MessageCircle, User, Truck } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet"
 import { CartButton } from "@/components/cart-button"
 import { useState, useEffect } from "react"
@@ -78,8 +78,8 @@ export function Header() {
                 key={item.href}
                 href={item.href}
                 className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${item.highlight
-                    ? "text-yellow-600 hover:bg-yellow-50 font-bold"
-                    : "text-gray-700 hover:text-primary hover:bg-blue-50"
+                  ? "text-yellow-600 hover:bg-yellow-50 font-bold"
+                  : "text-gray-700 hover:text-primary hover:bg-blue-50"
                   }`}
               >
                 {item.label}
@@ -111,6 +111,12 @@ export function Header() {
                   <span className="sr-only">Menu</span>
                 </Button>
               </SheetTrigger>
+              <Button asChild variant="outline" size="icon" className="lg:hidden h-10 w-10 border-2 border-primary/20 hover:bg-primary hover:text-white transition-all ml-2">
+                <Link href="/compte">
+                  <User className="h-5 w-5" />
+                  <span className="sr-only">Mon Compte</span>
+                </Link>
+              </Button>
               <SheetContent
                 side="right"
                 className="w-full sm:w-80 p-0 bg-gradient-to-b from-slate-50 to-white border-l-0"
@@ -146,14 +152,14 @@ export function Header() {
                           <Link
                             href={item.href}
                             className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group ${item.highlight
-                                ? "bg-gradient-to-r from-yellow-50 to-amber-50 text-yellow-700 border border-yellow-200"
-                                : "hover:bg-blue-50 text-gray-700 hover:text-primary"
+                              ? "bg-gradient-to-r from-yellow-50 to-amber-50 text-yellow-700 border border-yellow-200"
+                              : "hover:bg-blue-50 text-gray-700 hover:text-primary"
                               }`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
                             <div className={`p-2 rounded-lg ${item.highlight
-                                ? "bg-yellow-100 text-yellow-600"
-                                : "bg-blue-100 text-primary group-hover:bg-primary group-hover:text-white"
+                              ? "bg-yellow-100 text-yellow-600"
+                              : "bg-blue-100 text-primary group-hover:bg-primary group-hover:text-white"
                               } transition-colors`}>
                               <Icon className="h-5 w-5" />
                             </div>

@@ -135,6 +135,12 @@ export default function CheckoutClient() {
             prix_unitaire: item.prix ?? 0,
           })),
           mode_paiement: formData.mode_paiement,
+          client: {
+            prenom: formData.prenom,
+            nom: formData.nom,
+            email: formData.email,
+            telephone: formData.telephone,
+          },
           // Adresse de livraison
           adresse_livraison: {
             adresse: formData.adresse,
