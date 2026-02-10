@@ -1,7 +1,8 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,24 +13,33 @@ import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 
 export default function OrderTrackingPage() {
-    const [searchParams, setSearchParams] = useState({ numero: "", email: "" })
+    return (
+        <Suspense fallback={<div className="p-20 text-center">Chargement...</div>}>
+            <TrackingContent />
+        </Suspense>
+    )
+}
+
+function TrackingContent() {
+    const searchParams = useSearchParams()
+    const urlNumero = searchParams.get("numero")
+    const urlEmail = searchParams.get("email")
+
+    const [searchState, setSearchState] = useState({
+        numero: urlNumero || "",
+        email: urlEmail || ""
+    })
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [order, setOrder] = useState<any | null>(null)
 
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!searchParams.numero || !searchParams.email) {
-            setError("Veuillez remplir tous les champs")
-            return
-        }
-
+    const fetchOrder = async (numero: string, email: string) => {
         setLoading(true)
         setError(null)
         setOrder(null)
 
         try {
-            const res = await fetch(`/api/commandes/suivi?numero=${searchParams.numero}&email=${searchParams.email}`)
+            const res = await fetch(`/api/commandes/suivi?numero=${numero}&email=${email}`)
             const data = await res.json()
 
             if (!res.ok) {
@@ -42,6 +52,22 @@ export default function OrderTrackingPage() {
         } finally {
             setLoading(false)
         }
+    }
+
+    // Déclenchement automatique au chargement si paramètres présents
+    useEffect(() => {
+        if (urlNumero && urlEmail) {
+            fetchOrder(urlNumero, urlEmail)
+        }
+    }, [urlNumero, urlEmail])
+
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!searchState.numero || !searchState.email) {
+            setError("Veuillez remplir tous les champs")
+            return
+        }
+        await fetchOrder(searchState.numero, searchState.email)
     }
 
     return (
@@ -67,8 +93,8 @@ export default function OrderTrackingPage() {
                                             id="numero"
                                             placeholder="CMD202402-1234"
                                             className="pl-9"
-                                            value={searchParams.numero}
-                                            onChange={(e) => setSearchParams({ ...searchParams, numero: e.target.value })}
+                                            value={searchState.numero}
+                                            onChange={(e) => setSearchState({ ...searchState, numero: e.target.value })}
                                         />
                                     </div>
                                 </div>
@@ -82,8 +108,8 @@ export default function OrderTrackingPage() {
                                             type="email"
                                             placeholder="client@exemple.com"
                                             className="pl-9"
-                                            value={searchParams.email}
-                                            onChange={(e) => setSearchParams({ ...searchParams, email: e.target.value })}
+                                            value={searchState.email}
+                                            onChange={(e) => setSearchState({ ...searchState, email: e.target.value })}
                                         />
                                     </div>
                                 </div>
