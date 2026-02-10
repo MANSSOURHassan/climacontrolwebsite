@@ -1,58 +1,58 @@
-// Import des types React (utile pour typer les composants et props)
+// Importation du type React depuis la bibliothèque "react" (pour typer les enfants et les props)
 import type React from "react"
-// Import des types Next.js pour le SEO (metadata) et le viewport (responsive)
+// Importation des types Metadata et Viewport de Next.js (pour le SEO et le responsive)
 import type { Metadata, Viewport } from "next"
-// Import des polices Google via Next.js (optimisées automatiquement)
+// Importation des polices Inter et Open Sans depuis Google Fonts (optimisées via Next.js)
 import { Inter, Open_Sans } from "next/font/google"
-// Import de l’outil Analytics de Vercel (statistiques de visites)
+// Importation du composant Analytics de Vercel (pour le suivi des statistiques de visites)
 import { Analytics } from "@vercel/analytics/next"
-// Import des styles globaux du site
+// Importation des styles CSS globaux de l'application
 import "./globals.css"
-// Import des composants communs à toutes les pages
+// Importation du composant d'en-tête (Navigation)
 import { Header } from "@/components/header"
+// Importation du composant de pied de page
 import { Footer } from "@/components/footer"
-// Import du contexte panier (gestion globale du panier e-commerce)
+// Importation du contexte du panier (pour gérer les articles ajoutés partout dans l'app)
 import { CartProvider } from "@/lib/cart-context"
-// Import du système de notifications (toast)
+// Importation du contexte de comparaison (pour la fonctionnalité de comparaison de produits)
+import { ComparisonProvider } from "@/lib/comparison-context"
+// Importation du composant de barre flottante servant à la comparaison
+import { ComparisonFloatingBar } from "@/components/comparison-floating-bar"
+// Importation du système de notifications "toast" (pour les messages de succès/erreur)
 import { Toaster } from "@/components/ui/toaster"
 
-// Configuration de la police Inter
-// -> chargée une seule fois et injectée via une variable CSS
+// Configuration de la police Inter : charger le jeu de caractères latin et définir une variable CSS
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
 })
 
-// Configuration de la police Open Sans
-// -> utilisée souvent pour les titres ou textes importants
+// Configuration de la police Open Sans : charger le jeu latin, définir une variable CSS et les graisses nécessaires
 const openSans = Open_Sans({
   subsets: ["latin"],
   variable: "--font-display",
-  weight: ["400", "600", "700"], // poids autorisés
+  weight: ["400", "600", "700"],
 })
 
-
-
-// ======================
-// METADATA (SEO GLOBAL)
-// ======================
+// Définition des métadonnées SEO globales pour l'ensemble du site web
 export const metadata: Metadata = {
-  // URL de base du site (important pour le SEO et OpenGraph)
+  // Définition de l'URL de base pour résoudre les chemins relatifs des images et liens SEO
   metadataBase: new URL("https://climacontrol.fr"),
 
-  // Titre du site (par défaut + template pour les autres pages)
+  // Configuration des titres des pages (titre par défaut et modèle pour les autres pages)
   title: {
     default: "ClimaControl | Climatisation, Chauffage & Pompes à Chaleur Montpellier",
     template: "%s | ClimaControl",
   },
 
-  // Description SEO affichée sur Google
+  // Description principale affichée dans les résultats de recherche Google
   description:
     "CLIMACONTROL, entreprise de climatisation à Montpellier depuis 2009. Installation, entretien et dépannage de systèmes de climatisation, chauffage et pompes à chaleur. Devis gratuit.",
 
+  // Identifiant de l'outil générateur du site
   generator: "v0.app",
 
-  // Mots-clés SEO
+  // Liste de mots-clés stratégiques pour améliorer le référencement naturel (SEO)
   keywords: [
     "climatisation Montpellier",
     "chauffage Montpellier",
@@ -62,11 +62,14 @@ export const metadata: Metadata = {
     "HVAC Montpellier",
   ],
 
+  // Informations sur l'auteur du contenu
   authors: [{ name: "ClimaControl" }],
+  // Nom du créateur technique du site
   creator: "ClimaControl",
+  // Nom de l'éditeur du site
   publisher: "ClimaControl",
 
-  // Données pour le partage sur Facebook / LinkedIn
+  // Configuration Open Graph pour optimiser l'affichage lors des partages sur réseaux sociaux (Facebook, LinkedIn)
   openGraph: {
     type: "website",
     locale: "fr_FR",
@@ -85,7 +88,7 @@ export const metadata: Metadata = {
     ],
   },
 
-  // Données pour Twitter
+  // Configuration spécifique pour le partage sur Twitter (X)
   twitter: {
     card: "summary_large_image",
     title: "ClimaControl | Climatisation & Chauffage Montpellier",
@@ -93,10 +96,10 @@ export const metadata: Metadata = {
     images: ["/logo.jpg"],
   },
 
-  // Autorisation d’indexation par Google
+  // Instructions pour les robots d'indexation des moteurs de recherche
   robots: {
-    index: true,
-    follow: true,
+    index: true, // Autorise l'indexation
+    follow: true, // Autorise le suivi des liens
     googleBot: {
       index: true,
       follow: true,
@@ -106,7 +109,7 @@ export const metadata: Metadata = {
     },
   },
 
-  // Icônes du site (favicon)
+  // Configuration des icônes de favoris (favicons) pour le site
   icons: {
     icon: [
       { url: "/logo.jpg", media: "(prefers-color-scheme: light)" },
@@ -115,54 +118,48 @@ export const metadata: Metadata = {
   },
 }
 
-
-
-// ======================
-// CONFIGURATION VIEWPORT
-// ======================
+// Configuration du viewport pour le comportement de la fenêtre sur les appareils mobiles
 export const viewport: Viewport = {
-  themeColor: "#3B5998",      // Couleur du navigateur mobile
-  width: "device-width",     // Responsive
-  initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
+  themeColor: "#3B5998",      // Couleur de la barre d'adresse du navigateur mobile
+  width: "device-width",     // Ajuste la largeur à celle de l'écran
+  initialScale: 1,           // Zoom initial à 100%
+  maximumScale: 5,           // Empêche un zoom trop important (mais permet l'accessibilité)
+  userScalable: true,        // Autorise l'utilisateur à zoomer/dézoomer
 }
 
-
-
-// ======================
-// LAYOUT RACINE DU SITE
-// ======================
+// Composant de Layout Racine : c'est le squelette qui englobe toutes les pages du site
 export default function RootLayout({
-  children,
+  children, // Représente le contenu de la page actuellement affichée
 }: Readonly<{
-  children: React.ReactNode // Toutes les pages seront injectées ici
+  children: React.ReactNode
 }>) {
   return (
-    // Balise HTML globale
+    // Balise racine HTML avec la langue française et l'injection des variables de polices Google
     <html lang="fr" className={`${inter.variable} ${openSans.variable}`}>
-
-      {/* Corps du site */}
+      {/* Corps du document avec la police sans-serif configurée et une lissage des polices (antialiased) */}
       <body className="font-sans antialiased">
-
-        {/* Fournit le contexte panier à toute l’application */}
+        {/* Enveloppe l'application avec le fournisseur de panier pour qu'il soit accessible partout */}
         <CartProvider>
+          {/* Enveloppe l'application avec le fournisseur de comparaison de produits */}
+          <ComparisonProvider>
+            {/* Affiche l'en-tête (menu de navigation) sur chaque page */}
+            <Header />
 
-          {/* Header affiché sur toutes les pages */}
-          <Header />
+            {/* Affiche le contenu spécifique de la page visitée */}
+            {children}
 
-          {/* Contenu spécifique de chaque page */}
-          {children}
+            {/* Affiche la barre flottante de comparaison (uniquement si des produits sont sélectionnés) */}
+            <ComparisonFloatingBar />
 
-          {/* Footer affiché sur toutes les pages */}
-          <Footer />
+            {/* Affiche le pied de page sur chaque page */}
+            <Footer />
 
-          {/* Notifications (toast messages) */}
-          <Toaster />
-
+            {/* Affiche le conteneur pour les notifications temporaires (toasts) */}
+            <Toaster />
+          </ComparisonProvider>
         </CartProvider>
 
-        {/* Analytics Vercel (statistiques) */}
+        {/* Intègre l'outil d'analyse d'audience de Vercel */}
         <Analytics />
       </body>
     </html>

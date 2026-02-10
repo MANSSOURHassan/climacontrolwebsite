@@ -51,16 +51,18 @@ export default function ServicesPage() {
               CLIMACONTROL vous accompagne de l'installation à la maintenance. Expertise technique et service premium à Montpellier depuis 2009.
             </p>
             {/* Boutons CTA : Devis gratuit et téléphone */}
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Button size="lg" className="px-8 h-12 text-base" asChild>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="px-8 h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all" asChild>
                 <Link href="/devis">Demander un devis gratuit</Link>
               </Button>
-              <Button size="lg" variant="outline" className="px-8 h-12 text-base" asChild>
-                <Link href="tel:0467200444">
-                  <Phone className="mr-2 h-5 w-5" />
-                  04 67 20 04 44
-                </Link>
-              </Button>
+              <Link
+                href="tel:0467200444"
+                className="inline-flex items-center justify-center gap-2 h-12 px-8 py-2 text-base font-bold bg-white border border-gray-300 rounded-md hover:bg-gray-100 shadow-sm transition-colors !text-black"
+                style={{ color: '#000000', opacity: 1 }}
+              >
+                <Phone className="h-5 w-5 text-primary" style={{ opacity: 1 }} />
+                <span style={{ color: '#000000', opacity: 1, visibility: 'visible' }}>Appelez-nous : 04 67 20 04 44</span>
+              </Link>
             </div>
           </div>
         </div>

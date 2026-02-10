@@ -15,6 +15,11 @@ beforeEach(() => {
 })
 
 // Configuration globale après chaque test
-afterEach(() => {
-    // Nettoyage si nécessaire
+afterEach(function () {
+    // Si le test a échoué, on prend une capture d'écran
+    // Cela fonctionne même en mode 'cypress open'
+    if (this.currentTest?.state === 'failed') {
+        const screenshotName = `${this.currentTest.parent?.title} -- ${this.currentTest.title} (failed)`
+        cy.screenshot(screenshotName)
+    }
 })

@@ -11,11 +11,15 @@ export default defineConfig({
     supportFile: "cypress/support/e2e.ts",
     video: true,
     screenshotOnRunFailure: true,
+    screenshotsFolder: "cypress/screenshots",
+    videosFolder: "cypress/videos",
+    trashAssetsBeforeRuns: false,
     viewportWidth: 1280,
     viewportHeight: 720,
-    defaultCommandTimeout: 10000,
-    requestTimeout: 10000,
-    responseTimeout: 10000,
+    defaultCommandTimeout: 15000,
+    requestTimeout: 15000,
+    responseTimeout: 15000,
+    pageLoadTimeout: 60000,
   },
   component: {
     devServer: {

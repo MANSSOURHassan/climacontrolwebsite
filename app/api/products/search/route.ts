@@ -9,25 +9,23 @@ export async function GET(request: Request) {
         const minPrice = searchParams.get("minPrice")
         const maxPrice = searchParams.get("maxPrice")
         const brand = searchParams.get("brand")
+        const power = searchParams.get("power") // New parameter for power
+        const sort = searchParams.get("sort") // New parameter for sorting
 
-        let query = supabase.from("produits").select(`
-      *,
-      categorie:categories(nom, slug)
-    `)
+        // Use !inner if filtering by category to leverage database join filtering
+        const selectString = category && category !== "all"
+            ? `*, categorie:categories!inner(nom, slug)`
+            : `*, categorie:categories(nom, slug)`
 
-        if (q) {
-            // Simple text search on name or description
-            query = query.or(`nom.ilike.%${q}%,description.ilike.%${q}%`)
+        let query = supabase.from("produits").select(selectString)
+
+        // Apply filters
+        if (category && category !== "all") {
+            query = query.eq('categories.slug', category)
         }
 
-        if (category && category !== "all") {
-            // Assuming we filter by category slug or id, here using join filter could be tricky in one go if not careful.
-            // Easiest is to filter by categorie_id if we have it, or filter on the joined table result which Supabase supports via embedded resources filtering
-            // But simpler way: first get category ID from slug if needed, or if frontend sends slug, we might need a separate lookup or use !inner join.
-            // Let's assume frontend sends category SLUG for now.
-            query = query.eq('categories.slug', category) // This requires !inner on categories to filter parent rows
-            // Syntax: .select('*, categories!inner(slug)')
-            // Let's adjust the select above.
+        if (q) {
+            query = query.or(`nom.ilike.%${q}%,description.ilike.%${q}%`)
         }
 
         if (brand && brand !== "all") {
@@ -42,27 +40,19 @@ export async function GET(request: Request) {
             query = query.lte("prix_ttc", maxPrice)
         }
 
-        // Rewrite query to support category filter properly if needed
-        if (category && category !== "all") {
-            // Reset query to use inner join for filtering
-            query = supabase.from("produits").select(`
-         *,
-         categorie:categories!inner(nom, slug)
-       `).eq('categories.slug', category)
+        if (power) {
+            // Basic text match for power like "3.5 kW"
+            query = query.ilike("puissance", `%${power}%`)
+        }
 
-            // Re-apply other filters
-            if (q) {
-                query = query.or(`nom.ilike.%${q}%,description.ilike.%${q}%`)
-            }
-            if (brand && brand !== "all") {
-                query = query.eq("marque", brand)
-            }
-            if (minPrice) {
-                query = query.gte("prix_ttc", minPrice)
-            }
-            if (maxPrice) {
-                query = query.lte("prix_ttc", maxPrice)
-            }
+        // Apply sorting
+        if (sort === 'prix_asc') {
+            query = query.order('prix_ttc', { ascending: true })
+        } else if (sort === 'prix_desc') {
+            query = query.order('prix_ttc', { ascending: false })
+        } else {
+            // Default sort by popularity or name
+            query = query.order('en_vedette', { ascending: false }).order('nom', { ascending: true })
         }
 
         const { data: products, error } = await query

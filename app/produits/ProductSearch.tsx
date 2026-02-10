@@ -26,16 +26,19 @@ export default function ProductSearch() {
         setMounted(true)
     }, [])
     const [searchQuery, setSearchQuery] = useState("")
+    const [sort, setSort] = useState("pertinence")
     const [filters, setFilters] = useState({
         minPrice: 0,
         maxPrice: 5000,
         categories: [] as string[],
         brands: [] as string[],
+        powers: [] as string[], // New power filter
     })
 
     // Debounce search query to avoid too many API calls
     const debouncedSearch = useDebounce(searchQuery, 500)
     const debouncedFilters = useDebounce(filters, 500)
+    const debouncedSort = useDebounce(sort, 500)
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -60,6 +63,15 @@ export default function ProductSearch() {
 
                 if (debouncedFilters.brands.length > 0) {
                     params.set("brand", debouncedFilters.brands[0])
+                }
+
+                if (debouncedFilters.powers.length > 0) {
+                    // For now API supports single power param, so take first one or improve API to take list
+                    params.set("power", debouncedFilters.powers[0])
+                }
+
+                if (debouncedSort && debouncedSort !== 'pertinence') {
+                    params.set("sort", debouncedSort)
                 }
 
                 const res = await fetch(`/api/products/search?${params.toString()}`)
@@ -88,7 +100,7 @@ export default function ProductSearch() {
         }
 
         fetchProducts()
-    }, [debouncedSearch, debouncedFilters])
+    }, [debouncedSearch, debouncedFilters, debouncedSort])
 
     const handleCategoryChange = (category: string) => {
         setFilters(prev => {
@@ -108,6 +120,15 @@ export default function ProductSearch() {
         })
     }
 
+    const handlePowerChange = (power: string) => {
+        setFilters(prev => {
+            const newPowers = prev.powers.includes(power)
+                ? prev.powers.filter(p => p !== power)
+                : [power] // Single selection for now
+            return { ...prev, powers: newPowers }
+        })
+    }
+
     return (
         <div className="grid lg:grid-cols-4 gap-8 min-h-[400px]">
             {!mounted ? (
@@ -118,12 +139,22 @@ export default function ProductSearch() {
                 <>
                     {/* Sidebar Filters */}
                     <aside className="lg:col-span-1 space-y-8">
-                        <div className="bg-white p-6 rounded-lg shadow-sm border">
-                            <h3 className="font-bold text-lg mb-4">Filtres</h3>
+                        <div className="bg-white p-6 rounded-lg shadow-md border sticky top-24">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="font-bold text-lg">Filtres</h3>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 text-xs text-muted-foreground hover:text-primary"
+                                    onClick={() => setFilters({ minPrice: 0, maxPrice: 5000, categories: [], brands: [], powers: [] })}
+                                >
+                                    Réinitialiser
+                                </Button>
+                            </div>
 
                             {/* Categories */}
-                            <div className="mb-6">
-                                <h4 className="font-medium mb-3">Catégories</h4>
+                            <div className="mb-6 pb-6 border-b">
+                                <h4 className="font-semibold mb-3 text-sm uppercase tracking-wide text-gray-500">Catégories</h4>
                                 <div className="space-y-2">
                                     {['climatisation', 'chauffage', 'pompes-a-chaleur', 'ventilation', 'accessoires'].map((cat) => (
                                         <div key={cat} className="flex items-center space-x-2">
@@ -132,24 +163,41 @@ export default function ProductSearch() {
                                                 checked={filters.categories.includes(cat)}
                                                 onCheckedChange={() => handleCategoryChange(cat)}
                                             />
-                                            <Label htmlFor={cat} className="capitalize">{cat.replace(/-/g, ' ')}</Label>
+                                            <Label htmlFor={cat} className="capitalize cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{cat.replace(/-/g, ' ')}</Label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Powers */}
+                            <div className="mb-6 pb-6 border-b">
+                                <h4 className="font-semibold mb-3 text-sm uppercase tracking-wide text-gray-500">Puissance</h4>
+                                <div className="space-y-2">
+                                    {['2.5', '3.5', '4.2', '5.0', '7.0'].map((p) => (
+                                        <div key={p} className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id={`power-${p}`}
+                                                checked={filters.powers.includes(p)}
+                                                onCheckedChange={() => handlePowerChange(p)}
+                                            />
+                                            <Label htmlFor={`power-${p}`} className="cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{p} kW</Label>
                                         </div>
                                     ))}
                                 </div>
                             </div>
 
                             {/* Brands */}
-                            <div className="mb-6">
-                                <h4 className="font-medium mb-3">Marques</h4>
+                            <div className="mb-6 pb-6 border-b">
+                                <h4 className="font-semibold mb-3 text-sm uppercase tracking-wide text-gray-500">Marques</h4>
                                 <div className="space-y-2">
-                                    {['GREE', 'DAIKIN', 'MITSUBISHI', 'ATLANTIC'].map((brand) => (
+                                    {['GREE', 'DAIKIN', 'MITSUBISHI', 'ATLANTIC', 'SAMSUNG', 'LG', 'TOSHIBA'].map((brand) => (
                                         <div key={brand} className="flex items-center space-x-2">
                                             <Checkbox
                                                 id={brand}
                                                 checked={filters.brands.includes(brand)}
                                                 onCheckedChange={() => handleBrandChange(brand)}
                                             />
-                                            <Label htmlFor={brand}>{brand}</Label>
+                                            <Label htmlFor={brand} className="cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{brand}</Label>
                                         </div>
                                     ))}
                                 </div>
@@ -157,19 +205,20 @@ export default function ProductSearch() {
 
                             {/* Price Range */}
                             <div>
-                                <h4 className="font-medium mb-3">Prix</h4>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h4 className="font-semibold text-sm uppercase tracking-wide text-gray-500">Prix</h4>
+                                    <span className="text-xs font-medium text-primary">
+                                        {filters.minPrice}€ - {filters.maxPrice}€
+                                    </span>
+                                </div>
                                 <Slider
                                     defaultValue={[0, 5000]}
                                     max={5000}
-                                    step={100}
+                                    step={50}
                                     value={[filters.minPrice, filters.maxPrice]}
                                     onValueChange={(val) => setFilters({ ...filters, minPrice: val[0], maxPrice: val[1] })}
                                     className="mb-2"
                                 />
-                                <div className="flex justify-between text-sm text-muted-foreground">
-                                    <span>{filters.minPrice}€</span>
-                                    <span>{filters.maxPrice}€</span>
-                                </div>
                             </div>
                         </div>
                     </aside>
@@ -181,14 +230,14 @@ export default function ProductSearch() {
                             <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                 <Input
-                                    placeholder="Rechercher un produit..."
-                                    className="pl-10"
+                                    placeholder="Rechercher un produit (ex: Pular, R32...)"
+                                    className="pl-10 h-11 shadow-sm border-gray-200"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <Select>
-                                <SelectTrigger className="w-[180px]">
+                            <Select value={sort} onValueChange={setSort}>
+                                <SelectTrigger className="w-full sm:w-[200px] h-11 shadow-sm border-gray-200">
                                     <SelectValue placeholder="Trier par" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -213,7 +262,7 @@ export default function ProductSearch() {
                         ) : (
                             <div className="text-center py-20 bg-gray-50 rounded-lg border border-dashed">
                                 <p className="text-lg text-gray-500">Aucun produit ne correspond à votre recherche.</p>
-                                <Button variant="link" onClick={() => setFilters({ minPrice: 0, maxPrice: 5000, categories: [], brands: [] })}>
+                                <Button variant="link" onClick={() => setFilters({ minPrice: 0, maxPrice: 5000, categories: [], brands: [], powers: [] })}>
                                     Réinitialiser les filtres
                                 </Button>
                             </div>

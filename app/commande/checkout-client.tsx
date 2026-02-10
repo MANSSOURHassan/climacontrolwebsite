@@ -69,6 +69,14 @@ export default function CheckoutClient() {
     code_postal: "",
     ville: "",
     mode_paiement: "carte", // Mode de paiement par défaut
+    carte_nom: "",
+    carte_numero: "",
+    carte_expiration: "",
+    carte_cvc: "",
+    paypal_email: "",
+    virement_titulaire: "",
+    cheque_emetteur: "",
+    cheque_banque: "",
   })
 
   // ==============================
@@ -85,6 +93,29 @@ export default function CheckoutClient() {
   // Traite le paiement et enregistre la commande
   const handleSubmitOrder = async () => {
     setLoading(true)
+
+    // Validation des champs de paiement
+    if (formData.mode_paiement === "carte") {
+      if (!formData.carte_nom || !formData.carte_numero || !formData.carte_expiration || !formData.carte_cvc) {
+        toast({ title: "Erreur", description: "Veuillez remplir tous les champs bancaires", variant: "destructive" })
+        setLoading(false); return
+      }
+    } else if (formData.mode_paiement === "paypal") {
+      if (!formData.paypal_email) {
+        toast({ title: "Erreur", description: "Veuillez entrer votre email PayPal", variant: "destructive" })
+        setLoading(false); return
+      }
+    } else if (formData.mode_paiement === "virement") {
+      if (!formData.virement_titulaire) {
+        toast({ title: "Erreur", description: "Veuillez entrer le nom du titulaire du compte", variant: "destructive" })
+        setLoading(false); return
+      }
+    } else if (formData.mode_paiement === "cheque") {
+      if (!formData.cheque_emetteur || !formData.cheque_banque) {
+        toast({ title: "Erreur", description: "Veuillez remplir les informations du chèque", variant: "destructive" })
+        setLoading(false); return
+      }
+    }
 
     try {
       // Simule le traitement de paiement (délai de 2 secondes)
@@ -313,52 +344,171 @@ export default function CheckoutClient() {
                         onValueChange={(val) => setFormData({ ...formData, mode_paiement: val })}
                       >
                         {/* Option Carte bancaire */}
-                        <div className="flex items-center space-x-3 p-4 border rounded-lg hover:border-primary cursor-pointer">
-                          <RadioGroupItem value="carte" id="carte" />
-                          <Label htmlFor="carte" className="flex-1 cursor-pointer">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-semibold">Carte bancaire</p>
-                                <p className="text-sm text-muted-foreground">Visa, Mastercard, American Express</p>
+                        <div className={`p-4 border rounded-lg hover:border-primary cursor-pointer transition-all ${formData.mode_paiement === "carte" ? "border-primary bg-primary/5" : ""}`}>
+                          <div className="flex items-center space-x-3 mb-4">
+                            <RadioGroupItem value="carte" id="carte" />
+                            <Label htmlFor="carte" className="flex-1 cursor-pointer">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="font-semibold">Carte bancaire</p>
+                                  <p className="text-sm text-muted-foreground">Visa, Mastercard, American Express</p>
+                                </div>
+                                <CreditCard className="h-6 w-6 text-primary" />
                               </div>
-                              <CreditCard className="h-6 w-6 text-primary" />
+                            </Label>
+                          </div>
+
+                          {formData.mode_paiement === "carte" && (
+                            <div className="grid gap-4 pl-7 animate-in fade-in slide-in-from-top-2">
+                              <div className="grid gap-2">
+                                <Label htmlFor="carte_nom">Nom du titulaire</Label>
+                                <Input
+                                  id="carte_nom"
+                                  name="carte_nom"
+                                  placeholder="M. Jean Dupont"
+                                  value={formData.carte_nom || ""}
+                                  onChange={handleInputChange}
+                                  required={formData.mode_paiement === "carte"}
+                                />
+                              </div>
+                              <div className="grid gap-2">
+                                <Label htmlFor="carte_numero">Numéro de carte</Label>
+                                <Input
+                                  id="carte_numero"
+                                  name="carte_numero"
+                                  placeholder="0000 0000 0000 0000"
+                                  value={formData.carte_numero || ""}
+                                  onChange={handleInputChange}
+                                  required={formData.mode_paiement === "carte"}
+                                  maxLength={19}
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                  <Label htmlFor="carte_expiration">Date d'expiration</Label>
+                                  <Input
+                                    id="carte_expiration"
+                                    name="carte_expiration"
+                                    placeholder="MM/AA"
+                                    value={formData.carte_expiration || ""}
+                                    onChange={handleInputChange}
+                                    required={formData.mode_paiement === "carte"}
+                                    maxLength={5}
+                                  />
+                                </div>
+                                <div className="grid gap-2">
+                                  <Label htmlFor="carte_cvc">CVC</Label>
+                                  <Input
+                                    id="carte_cvc"
+                                    name="carte_cvc"
+                                    placeholder="123"
+                                    value={formData.carte_cvc || ""}
+                                    onChange={handleInputChange}
+                                    required={formData.mode_paiement === "carte"}
+                                    maxLength={3}
+                                  />
+                                </div>
+                              </div>
                             </div>
-                          </Label>
+                          )}
                         </div>
                         {/* Option PayPal */}
-                        <div className="flex items-center space-x-3 p-4 border rounded-lg hover:border-primary cursor-pointer">
-                          <RadioGroupItem value="paypal" id="paypal" />
-                          <Label htmlFor="paypal" className="flex-1 cursor-pointer">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-semibold">PayPal</p>
-                                <p className="text-sm text-muted-foreground">Paiement sécurisé via PayPal</p>
+                        <div className={`p-4 border rounded-lg hover:border-primary cursor-pointer transition-all ${formData.mode_paiement === "paypal" ? "border-primary bg-primary/5" : ""}`}>
+                          <div className="flex items-center space-x-3 mb-4">
+                            <RadioGroupItem value="paypal" id="paypal" />
+                            <Label htmlFor="paypal" className="flex-1 cursor-pointer">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="font-semibold">PayPal</p>
+                                  <p className="text-sm text-muted-foreground">Paiement sécurisé via PayPal</p>
+                                </div>
+                                <span className="text-2xl font-bold text-[#0070ba]">PayPal</span>
                               </div>
-                              <span className="text-2xl font-bold text-[#0070ba]">PayPal</span>
+                            </Label>
+                          </div>
+                          {formData.mode_paiement === "paypal" && (
+                            <div className="grid gap-4 pl-7 animate-in fade-in slide-in-from-top-2">
+                              <div className="grid gap-2">
+                                <Label htmlFor="paypal_email">Email PayPal</Label>
+                                <Input
+                                  id="paypal_email"
+                                  name="paypal_email"
+                                  type="email"
+                                  placeholder="exemple@email.com"
+                                  value={formData.paypal_email || ""}
+                                  onChange={handleInputChange}
+                                  required={formData.mode_paiement === "paypal"}
+                                />
+                              </div>
                             </div>
-                          </Label>
+                          )}
                         </div>
                         {/* Option Virement bancaire */}
-                        <div className="flex items-center space-x-3 p-4 border rounded-lg hover:border-primary cursor-pointer">
-                          <RadioGroupItem value="virement" id="virement" />
-                          <Label htmlFor="virement" className="flex-1 cursor-pointer">
-                            <div>
-                              <p className="font-semibold">Virement bancaire</p>
-                              <p className="text-sm text-muted-foreground">
-                                Instructions envoyées par email après commande
-                              </p>
+                        <div className={`p-4 border rounded-lg hover:border-primary cursor-pointer transition-all ${formData.mode_paiement === "virement" ? "border-primary bg-primary/5" : ""}`}>
+                          <div className="flex items-center space-x-3 mb-4">
+                            <RadioGroupItem value="virement" id="virement" />
+                            <Label htmlFor="virement" className="flex-1 cursor-pointer">
+                              <div>
+                                <p className="font-semibold">Virement bancaire</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Instructions envoyées par email après commande
+                                </p>
+                              </div>
+                            </Label>
+                          </div>
+                          {formData.mode_paiement === "virement" && (
+                            <div className="grid gap-4 pl-7 animate-in fade-in slide-in-from-top-2">
+                              <div className="grid gap-2">
+                                <Label htmlFor="virement_titulaire">Nom du titulaire du compte émetteur</Label>
+                                <Input
+                                  id="virement_titulaire"
+                                  name="virement_titulaire"
+                                  placeholder="M. Jean Dupont"
+                                  value={formData.virement_titulaire || ""}
+                                  onChange={handleInputChange}
+                                  required={formData.mode_paiement === "virement"}
+                                />
+                              </div>
                             </div>
-                          </Label>
+                          )}
                         </div>
                         {/* Option Chèque */}
-                        <div className="flex items-center space-x-3 p-4 border rounded-lg hover:border-primary cursor-pointer">
-                          <RadioGroupItem value="cheque" id="cheque" />
-                          <Label htmlFor="cheque" className="flex-1 cursor-pointer">
-                            <div>
-                              <p className="font-semibold">Chèque</p>
-                              <p className="text-sm text-muted-foreground">Envoi par courrier - délai 5 jours</p>
+                        <div className={`p-4 border rounded-lg hover:border-primary cursor-pointer transition-all ${formData.mode_paiement === "cheque" ? "border-primary bg-primary/5" : ""}`}>
+                          <div className="flex items-center space-x-3 mb-4">
+                            <RadioGroupItem value="cheque" id="cheque" />
+                            <Label htmlFor="cheque" className="flex-1 cursor-pointer">
+                              <div>
+                                <p className="font-semibold">Chèque</p>
+                                <p className="text-sm text-muted-foreground">Envoi par courrier - délai 5 jours</p>
+                              </div>
+                            </Label>
+                          </div>
+                          {formData.mode_paiement === "cheque" && (
+                            <div className="grid gap-4 pl-7 animate-in fade-in slide-in-from-top-2">
+                              <div className="grid gap-2">
+                                <Label htmlFor="cheque_emetteur">Nom de l'émetteur</Label>
+                                <Input
+                                  id="cheque_emetteur"
+                                  name="cheque_emetteur"
+                                  placeholder="M. Jean Dupont"
+                                  value={formData.cheque_emetteur || ""}
+                                  onChange={handleInputChange}
+                                  required={formData.mode_paiement === "cheque"}
+                                />
+                              </div>
+                              <div className="grid gap-2">
+                                <Label htmlFor="cheque_banque">Banque</Label>
+                                <Input
+                                  id="cheque_banque"
+                                  name="cheque_banque"
+                                  placeholder="Nom de la banque"
+                                  value={formData.cheque_banque || ""}
+                                  onChange={handleInputChange}
+                                  required={formData.mode_paiement === "cheque"}
+                                />
+                              </div>
                             </div>
-                          </Label>
+                          )}
                         </div>
                       </RadioGroup>
 
