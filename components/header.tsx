@@ -22,9 +22,15 @@ const menuItems = [
 export function Header() {
   const [mounted, setMounted] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
+  const [client, setClient] = useState<any>(null)
 
   useEffect(() => {
     setMounted(true)
+    // Vérifier l'état de connexion
+    const clientData = localStorage.getItem("client")
+    if (clientData) {
+      setClient(JSON.parse(clientData))
+    }
   }, [])
 
   if (!mounted) {
@@ -93,9 +99,9 @@ export function Header() {
 
             {/* Bouton compte - Desktop */}
             <Button asChild className="hidden md:flex bg-primary hover:bg-blue-700 shadow-md">
-              <Link href="/compte">
+              <Link href={client ? "/compte/dashboard" : "/compte"}>
                 <User className="h-4 w-4 mr-2" />
-                Mon Compte
+                {client ? `Bonjour, ${client.prenom}` : "Mon Compte"}
               </Link>
             </Button>
 
@@ -112,9 +118,9 @@ export function Header() {
                 </Button>
               </SheetTrigger>
               <Button asChild variant="outline" size="icon" className="lg:hidden h-10 w-10 border-2 border-primary/20 hover:bg-primary hover:text-white transition-all ml-2">
-                <Link href="/compte">
+                <Link href={client ? "/compte/dashboard" : "/compte"}>
                   <User className="h-5 w-5" />
-                  <span className="sr-only">Mon Compte</span>
+                  <span className="sr-only">{client ? "Mon Espace" : "Mon Compte"}</span>
                 </Link>
               </Button>
               <SheetContent
@@ -176,9 +182,9 @@ export function Header() {
                   <div className="mt-6 pt-6 border-t border-gray-200">
                     <SheetClose asChild>
                       <Button asChild className="w-full h-12 bg-gradient-to-r from-primary to-blue-700 hover:from-blue-700 hover:to-primary shadow-lg text-base font-semibold">
-                        <Link href="/compte" className="flex items-center justify-center gap-2">
+                        <Link href={client ? "/compte/dashboard" : "/compte"} className="flex items-center justify-center gap-2">
                           <User className="h-5 w-5" />
-                          Mon Compte
+                          {client ? "Mon Espace" : "Mon Compte"}
                         </Link>
                       </Button>
                     </SheetClose>

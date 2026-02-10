@@ -87,12 +87,30 @@ export default function CheckoutClient() {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
+  // Récupérer les données du client connecté
+  useEffect(() => {
+    const clientData = localStorage.getItem("client")
+    if (clientData) {
+      const client = JSON.parse(clientData)
+      setFormData((prev) => ({
+        ...prev,
+        prenom: client.prenom || "",
+        nom: client.nom || "",
+        email: client.email || "",
+        telephone: client.telephone || "",
+      }))
+    }
+  }, [])
+
   // ==============================
   // FONCTION DE SOUMISSION DE COMMANDE
   // ==============================
   // Traite le paiement et enregistre la commande
   const handleSubmitOrder = async () => {
     setLoading(true)
+
+    const clientData = localStorage.getItem("client")
+    const loggedClient = clientData ? JSON.parse(clientData) : null
 
     // Validation des champs de paiement
     if (formData.mode_paiement === "carte") {
@@ -126,7 +144,7 @@ export default function CheckoutClient() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          client_id: 1, // TODO: Récupérer depuis la session utilisateur
+          client_id: loggedClient?.id || 1,
           // Formatage des articles du panier pour l'API
           items: items.map((item) => ({
             produit_id: item.id,

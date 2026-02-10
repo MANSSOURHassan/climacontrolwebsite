@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -14,9 +15,18 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/hooks/use-toast"
 
 export default function CompteClient() {
+  const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+
+  // Redirection si déjà connecté
+  useEffect(() => {
+    const client = localStorage.getItem("client")
+    if (client) {
+      router.push("/compte/dashboard")
+    }
+  }, [router])
 
   // États pour l'inscription
   const [registerData, setRegisterData] = useState({

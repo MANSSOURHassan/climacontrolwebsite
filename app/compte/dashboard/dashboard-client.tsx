@@ -9,6 +9,7 @@ import { Package, FileText, User, LogOut, ShoppingBag, Truck } from "lucide-reac
 import type { Client } from "@/types/client"
 import { supabase } from "@/lib/supabase"
 import { Badge } from "@/components/ui/badge"
+import { useCart } from "@/lib/cart-context"
 
 interface Order {
   id: number
@@ -22,6 +23,7 @@ interface Order {
 
 export default function DashboardClient() {
   const router = useRouter()
+  const { itemCount } = useCart()
   const [client, setClient] = useState<Client | null>(null)
   const [loading, setLoading] = useState(true)
   const [orders, setOrders] = useState<Order[]>([])
@@ -42,13 +44,15 @@ export default function DashboardClient() {
       setClient(clientObj)
 
       // 2. Fetch Orders
-      const { data: ordersData } = await supabase
-        .from('commandes')
-        .select('*')
-        .eq('client_id', clientObj.id)
-        .order('date_commande', { ascending: false })
-
-      if (ordersData) setOrders(ordersData)
+      try {
+        const res = await fetch(`/api/commandes?client_id=${clientObj.id}`)
+        const data = await res.json()
+        if (data.commandes) {
+          setOrders(data.commandes)
+        }
+      } catch (err) {
+        console.error("Erreur chargement commandes:", err)
+      }
 
       // 3. Fetch Appointments
       const { data: appointmentsData } = await supabase
@@ -115,7 +119,7 @@ export default function DashboardClient() {
               <CardTitle className="text-sm font-medium text-green-900">Mon Panier</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-green-700">-</div> {/* Todo: Connect to cart context if needed */}
+              <div className="text-3xl font-bold text-green-700">{itemCount}</div>
               <Button variant="link" className="h-auto p-0 text-green-700" onClick={() => router.push('/panier')}>
                 Voir mon panier &rarr;
               </Button>
