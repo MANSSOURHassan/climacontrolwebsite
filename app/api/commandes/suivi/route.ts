@@ -1,6 +1,6 @@
 
 import { type NextRequest, NextResponse } from "next/server"
-import { query } from "@/lib/db"
+import { supabase } from "@/lib/supabase"
 
 export async function GET(request: NextRequest) {
     try {
@@ -15,39 +15,41 @@ export async function GET(request: NextRequest) {
             )
         }
 
-        // 1. Récupérer la commande par son numéro et vérifier que l'email appartient au client
-        // Attention: la structure exacte de la DB dépend de votre schéma.
-        // On suppose ici que `commandes` a un `client_id` et `clients` a un `email`.
-        // Si `commandes` a directement un `email_client`, adaptez la requête.
+        // 1. Récupérer la commande par son numéro
+        const { data: orders, error: orderError } = await supabase
+            .from('commandes')
+            .select('*, clients!inner(*)')
+            .eq('numero_commande', numero)
+            .eq('clients.email', email)
 
-        // Version avec JOIN clients
-        const result: any = await query(
-            `SELECT c.*, cl.nom, cl.prenom, cl.email 
-             FROM commandes c
-             JOIN clients cl ON c.client_id = cl.id
-             WHERE c.numero_commande = ? AND cl.email = ?`,
-            [numero, email]
-        )
-
-        if (!result || result.length === 0) {
+        if (orderError || !orders || orders.length === 0) {
             return NextResponse.json(
                 { error: "Commande introuvable ou informations incorrectes." },
                 { status: 404 }
             )
         }
 
-        const commande = result[0]
+        const commande = orders[0]
+        // Aplatir les infos client si nécessaire
+        const enrichedCommande = {
+            ...commande,
+            prenom: commande.clients?.prenom,
+            nom: commande.clients?.nom,
+            email: commande.clients?.email
+        }
 
         // 2. Récupérer le contenu de la commande
-        const items: any = await query(
-            `SELECT * FROM commande_lignes WHERE commande_id = ?`,
-            [commande.id]
-        )
+        const { data: items, error: itemsError } = await supabase
+            .from('commande_lignes')
+            .select('*')
+            .eq('commande_id', commande.id)
+
+        if (itemsError) throw itemsError
 
         return NextResponse.json({
             success: true,
             commande: {
-                ...commande,
+                ...enrichedCommande,
                 items
             }
         })

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Calendar } from "@/components/ui/calendar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -20,7 +20,15 @@ export default function BookingPage() {
     const [timeSlot, setTimeSlot] = useState("")
     const [contact, setContact] = useState({ name: "", phone: "", address: "", notes: "" })
     const [loading, setLoading] = useState(false)
+    const [loggedInClient, setLoggedInClient] = useState<any>(null)
     const { toast } = useToast()
+
+    useEffect(() => {
+        const clientData = localStorage.getItem("client")
+        if (clientData) {
+            setLoggedInClient(JSON.parse(clientData))
+        }
+    }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -31,18 +39,13 @@ export default function BookingPage() {
 
         setLoading(true)
 
-        // Check auth
-        const { data: { user } } = await supabase.auth.getUser()
-
         // Insert appointment
         const { error } = await supabase.from('appointments').insert([{
-            user_id: user?.id || null, // Allow guest booking if user columns allows null (need to update table def if strictly linked, but let's assume mixed usage or logged in)
-            // Actually for now let's assume we store guest info in notes if not logged in, or require login.
-            // Let's just put guest info in notes for simplicity in this demo.
+            user_id: loggedInClient?.id || null,
             service_type: serviceType,
             date: format(date, 'yyyy-MM-dd'),
             time_slot: timeSlot,
-            notes: `Contact: ${contact.name} - ${contact.phone} - ${contact.address}\nNotes: ${contact.notes}`,
+            notes: `Contact: ${contact.name || loggedInClient?.prenom} - ${contact.phone || loggedInClient?.telephone} - ${contact.address}\nNotes: ${contact.notes}`,
             status: 'pending'
         }])
 

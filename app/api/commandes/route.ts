@@ -42,42 +42,49 @@ export async function POST(request: NextRequest) {
     const annee = new Date().getFullYear()
     const mois = String(new Date().getMonth() + 1).padStart(2, "0")
 
-    let numero_commande = `CMD${annee}${mois}-${Math.floor(Math.random() * 10000).toString().padStart(4, "0")}`
-    let commande_id = Math.floor(Math.random() * 10000);
+    // Pour le numéro, on va compter les commandes du mois
+    const { count } = await supabase
+      .from('commandes')
+      .select('*', { count: 'exact', head: true })
 
-    try {
-      // Tentative d'insertion en base de données MySQL
-      const result: any = await query(
-        "SELECT COUNT(*) as count FROM commandes WHERE YEAR(created_at) = ? AND MONTH(created_at) = ?",
-        [annee, new Date().getMonth() + 1],
-      )
+    const numero_commande = `CMD${annee}${mois}-${String((count || 0) + 1).padStart(4, "0")}`
 
-      if (result && result[0]) {
-        const compteur = result[0].count + 1
-        numero_commande = `CMD${annee}${mois}-${String(compteur).padStart(4, "0")}`
-      }
+    // Insérer la commande dans Supabase
+    const adresse = `${data.adresse_livraison.adresse}, ${data.adresse_livraison.code_postal} ${data.adresse_livraison.ville}`
+    const { data: newOrder, error: orderError } = await supabase
+      .from('commandes')
+      .insert([{
+        numero_commande,
+        client_id: data.client_id || 1,
+        statut: 'en_attente',
+        montant_ht,
+        montant_tva,
+        montant_ttc,
+        adresse_livraison: adresse,
+        mode_paiement: data.mode_paiement
+      }])
+      .select()
+      .single()
 
-      // Insérer la commande
-      const adresse = `${data.adresse_livraison.adresse}, ${data.adresse_livraison.code_postal} ${data.adresse_livraison.ville}`
-      const commandeResult: any = await query(
-        `INSERT INTO commandes (numero_commande, client_id, statut, montant_ht, montant_tva, montant_ttc, adresse_livraison) 
-        VALUES (?, ?, 'en_attente', ?, ?, ?, ?)`,
-        [numero_commande, data.client_id || 1, montant_ht, montant_tva, montant_ttc, adresse],
-      )
+    if (orderError) throw orderError
 
-      commande_id = commandeResult.insertId
+    const commande_id = newOrder.id
 
-      // Insérer les lignes de commande
-      for (const item of data.items) {
-        await query(
-          `INSERT INTO commande_lignes (commande_id, nom_produit, quantite, prix_unitaire_ht, prix_total_ht) 
-            VALUES (?, ?, ?, ?, ?)`,
-          [commande_id, item.nom_produit, item.quantite, item.prix_unitaire, item.prix_unitaire * item.quantite],
-        )
-      }
-    } catch (dbError) {
-      console.warn("[API] DB non disponible, passage en mode simulation pour la commande:", dbError);
-    }
+    // Insérer les lignes de commande
+    const lignes = data.items.map(item => ({
+      commande_id,
+      nom_produit: item.nom_produit,
+      quantite: item.quantite,
+      prix_unitaire_ht: item.prix_unitaire,
+      prix_total_ht: item.prix_unitaire * item.quantite
+    }))
+
+    const { error: linesError } = await supabase
+      .from('commande_lignes')
+      .insert(lignes)
+
+    if (linesError) throw linesError
+
 
     // Récupérer les détails des produits depuis Supabase pour l'email
     const productIds = data.items.map(i => i.produit_id)
@@ -100,7 +107,7 @@ export async function POST(request: NextRequest) {
     // Envoyer l'email de confirmation
     await sendOrderConfirmationEmail({
       numero_commande,
-      client: data.client,
+      client: { ...data.client, adresse: adresse },
       items: enrichedItems,
       total: montant_ttc,
       date: new Date().toLocaleDateString('fr-FR')
@@ -134,9 +141,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "client_id requis" }, { status: 400 })
     }
 
-    const commandes: any = await query(`SELECT * FROM commandes WHERE client_id = ? ORDER BY created_at DESC`, [
-      client_id,
-    ])
+    const { data: commandes, error } = await supabase
+      .from('commandes')
+      .select('*')
+      .eq('client_id', client_id)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
 
     return NextResponse.json({ commandes })
   } catch (error) {
