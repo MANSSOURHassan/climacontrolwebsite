@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
-import { Mail, Lock, AlertCircle } from "lucide-react"
+import { Mail, Lock, AlertCircle, Eye, EyeOff } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/hooks/use-toast"
 
@@ -43,7 +43,49 @@ export default function CompteClient() {
     password: "",
   })
 
+  // États pour la visibilité des mots de passe
+  const [showLoginPassword, setShowLoginPassword] = useState(false)
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  // État pour "Mot de passe oublié"
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState("")
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotSuccess, setForgotSuccess] = useState(false)
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setForgotLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Une erreur est survenue")
+      }
+
+      setForgotSuccess(true)
+      toast({
+        title: "Email envoyé",
+        description: "Veuillez consulter votre boîte de réception.",
+      })
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setForgotLoading(false)
+    }
+  }
+
   const handleRegister = async (e: React.FormEvent) => {
+    // ... existing handleRegister ...
     e.preventDefault()
     setError("")
 
@@ -146,149 +188,229 @@ export default function CompteClient() {
   return (
     <Card>
       <CardContent className="p-8">
-        <Tabs defaultValue="connexion" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
-            <TabsTrigger value="connexion">Connexion</TabsTrigger>
-            <TabsTrigger value="inscription">Inscription</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="connexion" className="space-y-6">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email-login">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="email-login"
-                    type="email"
-                    placeholder="votre@email.com"
-                    className="pl-10"
-                    value={loginData.email}
-                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password-login">Mot de passe</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="password-login"
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-10"
-                    value={loginData.password}
-                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <Link href="#" className="text-primary hover:underline">
-                  Mot de passe oublié ?
-                </Link>
-              </div>
-              <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                {isLoading ? "Connexion..." : "Se connecter"}
-              </Button>
-            </form>
-          </TabsContent>
-
-          <TabsContent value="inscription" className="space-y-6">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="prenom">Prénom</Label>
-                  <Input
-                    id="prenom"
-                    placeholder="Jean"
-                    value={registerData.prenom}
-                    onChange={(e) => setRegisterData({ ...registerData, prenom: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nom">Nom</Label>
-                  <Input
-                    id="nom"
-                    placeholder="Dupont"
-                    value={registerData.nom}
-                    onChange={(e) => setRegisterData({ ...registerData, nom: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email-register">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="email-register"
-                    type="email"
-                    placeholder="votre@email.com"
-                    className="pl-10"
-                    value={registerData.email}
-                    onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password-register">Mot de passe</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="password-register"
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-10"
-                    value={registerData.password}
-                    onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                    required
-                    minLength={8}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">Minimum 8 caractères</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password-confirm">Confirmer le mot de passe</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="password-confirm"
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-10"
-                    value={registerData.confirmPassword}
-                    onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-              <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                {isLoading ? "Création..." : "Créer mon compte"}
-              </Button>
-              <p className="text-xs text-muted-foreground text-center">
-                En créant un compte, vous acceptez nos conditions d'utilisation
+        {showForgotPassword ? (
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-bold">Mot de passe oublié</h2>
+              <p className="text-muted-foreground text-sm">
+                Entrez votre email pour recevoir un lien de réinitialisation.
               </p>
-            </form>
-          </TabsContent>
-        </Tabs>
+            </div>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {forgotSuccess ? (
+              <Alert className="border-green-500 bg-green-50 text-green-700">
+                <AlertCircle className="h-4 w-4 text-green-600" />
+                <AlertDescription>
+                  Si un compte est associé à cet email, vous recevrez un lien de réinitialisation d'ici quelques instants.
+                  Pensez à vérifier vos courriers indésirables.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="forgot-email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      id="forgot-email"
+                      type="email"
+                      placeholder="votre@email.com"
+                      className="pl-10"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+                <Button type="submit" className="w-full" size="lg" disabled={forgotLoading}>
+                  {forgotLoading ? "Envoi..." : "Envoyer le lien"}
+                </Button>
+              </form>
+            )}
+
+            <div className="text-center">
+              <Button variant="link" onClick={() => { setShowForgotPassword(false); setForgotSuccess(false); setError(""); }}>
+                Retour à la connexion
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Tabs defaultValue="connexion" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsTrigger value="connexion">Connexion</TabsTrigger>
+              <TabsTrigger value="inscription">Inscription</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="connexion" className="space-y-6">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email-login">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      id="email-login"
+                      type="email"
+                      placeholder="votre@email.com"
+                      className="pl-10"
+                      value={loginData.email}
+                      onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password-login">Mot de passe</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      id="password-login"
+                      type={showLoginPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="pl-10 pr-10"
+                      value={loginData.password}
+                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      className="absolute right-3 top-3 text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      {showLoginPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-primary hover:underline text-left bg-transparent border-none p-0 cursor-pointer"
+                  >
+                    Mot de passe oublié ?
+                  </button>
+                </div>
+                <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                  {isLoading ? "Connexion..." : "Se connecter"}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="inscription" className="space-y-6">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="prenom">Prénom</Label>
+                    <Input
+                      id="prenom"
+                      placeholder="Jean"
+                      value={registerData.prenom}
+                      onChange={(e) => setRegisterData({ ...registerData, prenom: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nom">Nom</Label>
+                    <Input
+                      id="nom"
+                      placeholder="Dupont"
+                      value={registerData.nom}
+                      onChange={(e) => setRegisterData({ ...registerData, nom: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email-register">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      id="email-register"
+                      type="email"
+                      placeholder="votre@email.com"
+                      className="pl-10"
+                      value={registerData.email}
+                      onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password-register">Mot de passe</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      id="password-register"
+                      type={showRegisterPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="pl-10 pr-10"
+                      value={registerData.password}
+                      onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                      required
+                      minLength={8}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                      className="absolute right-3 top-3 text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      {showRegisterPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Minimum 8 caractères</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password-confirm">Confirmer le mot de passe</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      id="password-confirm"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="pl-10 pr-10"
+                      value={registerData.confirmPassword}
+                      onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-3 text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                </div>
+                <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                  {isLoading ? "Création..." : "Créer mon compte"}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  En créant un compte, vous acceptez nos conditions d'utilisation
+                </p>
+              </form>
+            </TabsContent>
+          </Tabs>
+        )}
       </CardContent>
     </Card>
   )

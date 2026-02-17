@@ -7,7 +7,9 @@ import { Star, ShoppingCart, Info } from "lucide-react" // Import des icônes St
 import Image from "next/image" // Import du composant Image pour les images optimisées
 import Link from "next/link" // Import du composant Link pour la navigation côté client
 import { useComparison } from "@/lib/comparison-context" // Import du hook de comparaison pour gérer les produits à comparer
-import { ArrowRightLeft } from "lucide-react" // Import de l'icône de flèches pour le bouton de comparaison
+import { ArrowRightLeft, Maximize2 } from "lucide-react" // Import des icônes
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog"
+import ProductImageGallery from "@/app/produits/[id]/ProductImageGallery"
 
 import { useCart } from "@/lib/cart-context" // Import du hook pour gérer les actions du panier (ajout, suppression)
 import { useToast } from "@/hooks/use-toast" // Import du hook pour afficher des notifications (toasts) à l'utilisateur
@@ -18,6 +20,8 @@ interface Product { // Définition de la structure de données pour un objet pro
   brand: string // Marque du fabricant du produit
   price: number // Prix unitaire du produit
   image: string // Chemin ou URL vers l'image du produit
+  images?: string[] // Tableau d'images supplémentaires
+  description?: string // Description du produit pour la lightbox
   rating: number // Note moyenne attribuée par les utilisateurs
   features: string[] // Tableau contenant les caractéristiques techniques principales
   badge?: string // Étiquette optionnelle (ex: "Exclusif", "Dernier article")
@@ -68,16 +72,37 @@ export function ProductCard({ product }: { product: Product }) { // Composant ex
   return ( // Section de rendu du composant
     <Card className="overflow-hidden hover:shadow-md transition-shadow border group"> {/* Structure de base Card avec effets hover */}
       {/* Conteneur de l'image du produit avec ses éléments superposés */}
-      <div className="relative"> {/* Positionnement relatif pour placer les badges par-dessus */}
-        <Image // Utilisation du composant Image optimisé de Next.js
-          src={product.image || "/placeholder.jpg"} // Source de l'image ou image par défaut si non disponible
-          alt={product.name} // Texte alternatif descriptif
-          width={400} // Largeur fixe pour le chargement
-          height={300} // Hauteur fixe pour le chargement
-          // Styles CSS pour le redimensionnement et l'animation zoom
-          className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-        {product.badge && <Badge className="absolute top-2 right-2">{product.badge}</Badge>} {/* Affichage conditionnel de l'étiquette en haut à droite */}
+      <div className="relative group"> {/* Positionnement relatif pour placer les badges par-dessus */}
+        <Dialog>
+          <DialogTrigger asChild>
+            <div className="cursor-zoom-in relative">
+              <Image // Utilisation du composant Image optimisé de Next.js
+                src={product.image || "/placeholder.jpg"} // Source de l'image ou image par défaut si non disponible
+                alt={product.name} // Texte alternatif descriptif
+                width={400} // Largeur fixe pour le chargement
+                height={300} // Hauteur fixe pour le chargement
+                // Styles CSS pour le redimensionnement et l'animation zoom
+                className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
+                <Maximize2 className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 h-8 w-8" />
+              </div>
+            </div>
+          </DialogTrigger>
+          <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-white/95 backdrop-blur-sm border-none shadow-2xl">
+            <DialogTitle className="sr-only">Galerie d'images de {product.name}</DialogTitle>
+            <div className="p-4 md:p-8">
+              <ProductImageGallery
+                mainImage={product.image}
+                images={product.images || []}
+                productName={product.name}
+                description={product.description}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {product.badge && <Badge className="absolute top-2 right-2 z-10">{product.badge}</Badge>} {/* Affichage conditionnel de l'étiquette en haut à droite */}
 
         {/* Bouton pour activer ou désactiver la comparaison de ce produit */}
         <button // Élément interactif de comparaison

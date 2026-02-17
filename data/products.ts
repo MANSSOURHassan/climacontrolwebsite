@@ -35,6 +35,10 @@ export const products = {
       brand: "GREE",
       price: 2499.99,
       image: "/images/climatisation-gainable-u-match-cdt-24-8-kwatts-monophase-r32-prix-2499.jpg",
+      images: [
+        "/images/climatisation-gainable-u-match-cdt-24-8-kwatts-monophase-r32-unite-interieure.jpg",
+        "/images/climatisation-gainable-u-match-cdt-24-8-kwatts-monophase-r32-unite-exterieure.jpg"
+      ],
       rating: 5,
       features: ["Système complet", "8 kW Monophasé", "Gaz R32", "Thermostat inclus"],
       badge: "Bestseller",

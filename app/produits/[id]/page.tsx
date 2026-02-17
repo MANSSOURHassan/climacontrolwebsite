@@ -4,10 +4,11 @@ import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Star, Truck, ShieldCheck, Thermometer, ShoppingCart } from "lucide-react"
-import AddToCartButton from "./AddToCartButton" // We'll create this helper
-import ReviewsSection from "./ReviewsSection" // We'll create this
+import AddToCartButton from "./AddToCartButton"
+import ReviewsSection from "./ReviewsSection"
+import ProductImageGallery from "./ProductImageGallery"
 
-export const revalidate = 60 // Revalidate every minute
+export const revalidate = 60
 
 async function getProduct(id: string) {
     const { data: product } = await supabase
@@ -40,17 +41,15 @@ export default async function ProductPage(props: { params: Promise<{ id: string 
                 <div className="bg-white rounded-2xl shadow-sm overflow-hidden border">
                     <div className="grid md:grid-cols-2 gap-0">
                         {/* Image Section */}
-                        <div className="p-8 bg-gray-100 flex items-center justify-center relative min-h-[400px]">
-                            <div className="relative w-full h-full min-h-[400px]">
-                                <Image
-                                    src={product.image_principale || "/placeholder.jpg"}
-                                    alt={product.nom}
-                                    fill
-                                    className="object-contain hover:scale-105 transition-transform duration-500"
-                                />
-                            </div>
+                        <div className="p-8 bg-gray-50 flex flex-col items-center justify-center relative min-h-[400px] border-r">
+                            <ProductImageGallery
+                                mainImage={product.image_principale}
+                                images={product.images_supplementaires}
+                                productName={product.nom}
+                                description={product.description}
+                            />
                             {product.en_vedette && (
-                                <Badge className="absolute top-6 left-6 text-lg py-2 px-4 shadow-md">
+                                <Badge className="absolute top-6 left-6 text-lg py-2 px-4 shadow-md z-10">
                                     Best Seller
                                 </Badge>
                             )}

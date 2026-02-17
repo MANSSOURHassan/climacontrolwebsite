@@ -2,6 +2,8 @@
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS siret VARCHAR(14);
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS type_client VARCHAR(50) DEFAULT 'particulier';
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS company VARCHAR(100);
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS reset_password_token VARCHAR(255);
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS reset_password_expires TIMESTAMP WITH TIME ZONE;
 
 -- Update the check constraint if needed (drop old one first to be safe, though this is tricky in generic SQL)
 -- For now, just ensuring columns exist is the priority. 
